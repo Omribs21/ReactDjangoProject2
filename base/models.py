@@ -13,13 +13,22 @@ class Categories(models.Model):
 class Products(models.Model):
     desc = models.CharField(max_length=50)
     price = models.PositiveIntegerField()
+    discount_price = models.PositiveIntegerField(default=1,null=False)
     _id = models.AutoField(primary_key=True, editable=False)
     category = models.ForeignKey(Categories ,on_delete=models.CASCADE, null=True)
+
+class PersonalProducts(models.Model):
+    desc = models.CharField(max_length=50)
+    price = models.PositiveIntegerField()
+    discount_price = models.PositiveIntegerField()
+    _id = models.AutoField(primary_key=True, editable=False)
+    category = models.ForeignKey(Categories ,on_delete=models.CASCADE, null=True)
+
 
 class Orders(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
     _id = models.AutoField(primary_key=True, editable=False)
-    city = models.CharField(max_length=50,default="", null=False)
+    city = models.CharField(max_length=50,default="", )
     district = models.CharField(max_length=50,default="", null=False)
     phone_num = models.CharField(max_length=50,default="", null=False)
     postal_code = models.CharField(max_length=50,default="", null=False)

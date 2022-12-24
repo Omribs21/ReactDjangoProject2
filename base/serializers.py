@@ -3,7 +3,7 @@ from operator import imod
 from pyexpat import model
 from sre_parse import CATEGORIES
 from rest_framework.serializers import ModelSerializer
-from base.models import Categories,Products,Orders,Wishlist
+from base.models import Categories,Products,Orders,Wishlist,PersonalProducts
 
 
 class CategorySerializer(ModelSerializer):
@@ -27,3 +27,8 @@ class WishlistSerializer(ModelSerializer):
     class Meta:
         model= Wishlist
         fields ='__all__'
+
+class PersonalProductsSerializer(ModelSerializer):
+    class Meta:
+        model = PersonalProducts
+        fields = '__all__'

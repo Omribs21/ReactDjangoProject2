@@ -10,8 +10,8 @@ import json
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
-from base.serializers import OrderSerializer,CategorySerializer,ProductSerializer,WishlistSerializer
-from base.models import Profile,Categories,Products,Orders,Orders_details,Wishlist
+from base.serializers import OrderSerializer,CategorySerializer,ProductSerializer,WishlistSerializer,PersonalProductsSerializer
+from base.models import Profile,Categories,Products,Orders,Orders_details,Wishlist,PersonalProducts
 from django.contrib.auth import logout
 
 def index(req):
@@ -25,7 +25,7 @@ def get_data(request):
     
 
 @api_view(["POST"])
-def register(request):
+def register(request): # request =  {"username":"omri","password":1234}
     Username = request.data["username"]
     Password = request.data["password"]
     Email = request.data["email"]
@@ -87,12 +87,31 @@ def AddCategory(request):
 @api_view(["POST"])
 def AddProduct(request):
     serializer = ProductSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+    else:
+        return Response("data was not saved")
+    return Response({"new product":"Added"})
+
+@api_view(["POST"])
+def AddPersonalProduct(request):
+    serializer = PersonalProductsSerializer(data=request.data)
 
     if serializer.is_valid():
         serializer.save()
     else:
         return Response("data was not saved")
     return Response({"new product":"Added"})
+
+@api_view(["GET"])
+def GetPersonalProducts(request, id = 0):
+    if int(id) > 0:
+        products = PersonalProducts.objects.filter(_id = int(id))
+    else:
+        products = PersonalProducts.objects.all()
+    serializer = PersonalProductsSerializer(products,many =True)
+    return Response(serializer.data)
+
 
 @api_view(["GET"])
 def GetProductsByCategory(request):
@@ -117,17 +136,20 @@ def GetProducts(request, id = 0):
     serializer = ProductSerializer(products,many =True)
     return Response(serializer.data)
 
-    
-
-
+@api_view(['DELETE'])
+def DeleteProduct(request):
+    # DELETE the item from the Wishlist by its ID and the user ID.
+    Products.objects.filter(_id=request.data["prod_id"]).delete()
+    return JsonResponse({"item ID that deleted":request.data["prod_id"]})
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def AddOrder(request):
     # User_id = request.user.id
-
+    print(request.data["mycartItems"])
     # details for the order.
     myCart = (request.data["cartItems"])["CartItems"]
+    myProductCart = (request.data["mycartItems"])["MycartItems"]
     city = request.data["city"]
     district = request.data["district"]
     phone =request.data["phone"]
@@ -149,7 +171,16 @@ def AddOrder(request):
             total = item["total"],
             patch = item["patch"],
             size = item["size"])
+    for item in myProductCart:
+        Orders_details.objects.create(
+            order_id = newOrder, 
+            desc = item["desc"],
+            price = item["price"],
+            quantity = item["quantity"],
+            total = item["total"],
+            size = item["size"])
     return Response({"order saved, cost:":totalCart})
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -191,3 +222,13 @@ def GetWishlist(request):
     all_products = Wishlist.objects.filter(user_id = user_id) # returnes all the product of the user 
     serializer = WishlistSerializer(all_products,many =True)
     return Response(serializer.data) # returnes the data in JSON format.
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def GetOrders(request):
+    user_id = request.user.id
+    all_orders = Orders.objects.filter(user_id = user_id)
+    print(all_orders)
+    serializer = OrderSerializer(all_orders,many =True)
+    print(serializer.data[0])
+    return Response(serializer.data)
